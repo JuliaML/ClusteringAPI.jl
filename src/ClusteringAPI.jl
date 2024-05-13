@@ -1,14 +1,7 @@
 module ClusteringAPI
 
-# Use the README as the module docs
-@doc let
-    path = joinpath(dirname(@__DIR__), "README.md")
-    include_dependency(path)
-    read(path, String)
-end ClusteringAPI
-
 export ClusteringAlgorithm, ClusteringResults
-export cluster, cluster_number, cluster_labels
+export cluster, cluster_number, cluster_labels, cluster_probs
 
 abstract type ClusteringAlgorithm end
 abstract type ClusteringResults end
@@ -18,29 +11,33 @@ abstract type ClusteringResults end
 
 Cluster input `data` according to the algorithm specified by `ca`.
 All options related to the algorithm are given as keyword arguments when
-constructing `ca`. The input data can be specified two ways:
+constructing `ca`.
 
-- as a (d, m) matrix, with d the dimension of the data points and m the amount of
-  data points (i.e., each column is a data point).
-- as a length-m vector of length-d vectors (i.e., each inner vector is a data point).
+The input data are a length-m vector of length-d vectors.
+"Vector" here is considered in the generalized sense, i.e., any objects that
+a distance can be defined on them. Some clustering algorithms may allow alternative
+data input type for performance acceleration.
 
+The output is always a subtype of `ClusteringResults` that can be further queried.
 The cluster labels are always the
-positive integers `1:n` with `n::Int` the number of created clusters.
+positive integers `1:n` with `n::Int` the number of created clusters,
+Data points that couldn't get clustered (e.g., outliers or noise)
+get assigned negative integers, typically just `-1`.
 
-The output is always a subtype of `ClusteringResults`,
-which always extends the following two methods:
+`ClusteringResults` subtypes always implement the following functions:
 
+- `cluster_labels(cr)` returns a length-m vector `labels::Vector{Int}` containing
+  the clustering labels (most of which are of `1:n` while some may be negative integers).
+- `cluster_probs(cr)` returns `probs` a length-m vector of length-`n` vectors
+  containing the "probabilities" or "score" of each point belonging to one of
+  the created clusters (used with fuzzy clustering algorithms).
 - `cluster_number(cr)` returns `n`.
-- `cluster_labels(cr)` returns `labels::Vector{Int}` a length-m vector of labels
-  mapping each data point to each cluster (`1:n`).
-
-and always includes `ca` in the field `algorithm`.
 
 Other algorithm-related output can be obtained as a field of the result type,
-or other specific functions of the result type.
-This is described in the individual algorithm implementations.
+or by using other specific functions of the result type.
+This is described in the individual algorithm implementations docstrings.
 """
-function cluster(ca::ClusteringAlgorithm, data::AbstractMatrix)
+function cluster(ca::ClusteringAlgorithm, data)
     throw(ArgumentError("No implementation for `cluster` for $(typeof(ca))."))
 end
 
@@ -50,13 +47,24 @@ end
 Return the number of created clusters in the output of [`cluster`](@ref).
 """
 function cluster_number(cr::ClusteringResults)
-    return length(Set(cluster_labels(cr))) # fastest way to count unique elements
+    return count(>(0), Set(cluster_labels(cr))) # fastest way to count positive labels
 end
 
 """
-    cluster_labels(cr::ClusteringResults) → labels::Vector{Int}
+    cluster_labels(cr::ClusteringResults) → probs::Vector{Vector{Real}}
 
 Return the cluster labels of the data points used in [`cluster`](@ref).
+"""
+function cluster_labels(cr::ClusteringResults)
+    return cr.labels # typically there
+end
+
+"""
+    cluster_probs(cr::ClusteringResults) → probs::Vector{Vector{Real}}
+
+Return the cluster probabilities of the data points used in [`cluster`](@ref).
+They are length-`n` vectors containing the "probabilities" or "score" of each point
+belonging to one of the created clusters (used with fuzzy clustering algorithms).
 """
 function cluster_labels(cr::ClusteringResults)
     return cr.labels # typically there
