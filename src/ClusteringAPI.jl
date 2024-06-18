@@ -13,10 +13,10 @@ Cluster input `data` according to the algorithm specified by `ca`.
 All options related to the algorithm are given as keyword arguments when
 constructing `ca`.
 
-The input data are a length-m vector of length-d vectors.
+The input `data` is a length-m iterable of "vectors" (data points).
 "Vector" here is considered in the generalized sense, i.e., any objects that
-a distance can be defined on them. Some clustering algorithms may allow alternative
-data input type for performance acceleration.
+a distance can be defined on them so that they can be clustered.
+In the majority of cases these are vectors of real numbers.
 
 The output is always a subtype of `ClusteringResults` that can be further queried.
 The cluster labels are always the
@@ -27,10 +27,10 @@ get assigned negative integers, typically just `-1`.
 `ClusteringResults` subtypes always implement the following functions:
 
 - `cluster_labels(cr)` returns a length-m vector `labels::Vector{Int}` containing
-  the clustering labels (most of which are of `1:n` while some may be negative integers).
+  the clustering labels , so that `data[i]` has label `labels[i]`.
 - `cluster_probs(cr)` returns `probs` a length-m vector of length-`n` vectors
   containing the "probabilities" or "score" of each point belonging to one of
-  the created clusters (used with fuzzy clustering algorithms).
+  the created clusters (useful for fuzzy clustering algorithms).
 - `cluster_number(cr)` returns `n`.
 
 Other algorithm-related output can be obtained as a field of the result type,
@@ -51,7 +51,7 @@ function cluster_number(cr::ClusteringResults)
 end
 
 """
-    cluster_labels(cr::ClusteringResults) → probs::Vector{Vector{Real}}
+    cluster_labels(cr::ClusteringResults) → labels::Vector{Int}
 
 Return the cluster labels of the data points used in [`cluster`](@ref).
 """
