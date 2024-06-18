@@ -66,8 +66,14 @@ Return the cluster probabilities of the data points used in [`cluster`](@ref).
 They are length-`n` vectors containing the "probabilities" or "score" of each point
 belonging to one of the created clusters (used with fuzzy clustering algorithms).
 """
-function cluster_labels(cr::ClusteringResults)
-    return cr.labels # typically there
+function cluster_probs(cr::ClusteringResults)
+    labels = cluster_labels(cr)
+    n = cluster_number(cr)
+    probs = [zeros(Real, n) for _ in 1:length(labels)]
+    for (i, label) in enumerate(labels)
+        probs[i][label] = 1
+    end
+    return probs
 end
 
 # two helper functions for agnostic input data type
