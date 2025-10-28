@@ -2,3 +2,6 @@ name = "ClusteringAPI"
 uuid = "c60ac3cc-f4a1-4e3a-9706-ecb4d2c8df9c"
 authors = ["Datseris <datseris.george@gmail.com>"]
 version = "0.1.0"
+
+[compat]
+julia = "1"
